@@ -1,0 +1,8 @@
+{
+  "radius_cycles": 26.538551330566406,
+  "alpha": 0.1,
+  "n_engines": 20,
+  "target": "capped RUL",
+  "assumption": "exchangeable engine endpoints; empirical official-test coverage is reported separately",
+  "reference": "https://arxiv.org/abs/2107.07511"
+}
