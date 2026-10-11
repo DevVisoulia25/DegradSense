@@ -1,4 +1,4 @@
-# EngineScope research results
+# DegradSense research results
 
 Version two evaluates sensor fusion and historical context using a prespecified study on NASA C-MAPSS FD001 and FD003. It completed 70 development model fits across five engine splits and then refitted one frozen, validation-selected model per dataset. The model and calibration choices were fixed before final assessment and official test evaluation. Results are in operating cycles.
 

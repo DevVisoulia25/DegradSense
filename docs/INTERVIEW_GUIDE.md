@@ -1,4 +1,4 @@
-# Explaining EngineScope in an interview
+# Explaining DegradSense in an interview
 
 Describe the project as a controlled study of sensor fusion and temporal context for remaining useful life estimation. Lead with the question, experimental controls, and measured results. Do not claim that LSTM always beats classical models or that the dataset represents real flight telemetry.
 

@@ -1,8 +1,8 @@
-# EngineScope model card
+# DegradSense model card
 
 ## Purpose and intended use
 
-EngineScope is an educational research implementation of remaining useful life estimation from simulated turbofan sensor histories. Use it to reproduce controlled predictive-maintenance experiments and inspect model behavior. Its final model for FD001 is an LSTM; its final model for FD003 is XGBoost. The datasets are modeled independently.
+DegradSense is an educational research implementation of remaining useful life estimation from simulated turbofan sensor histories. Use it to reproduce controlled predictive-maintenance experiments and inspect model behavior. Its final model for FD001 is an LSTM; its final model for FD003 is XGBoost. The datasets are modeled independently.
 
 The trained models support the selected dataset's sensor definitions, ordering, and units. They are not validated for real equipment or new operating regimes. FD002 and FD004 require further operating-condition handling and are not supported by this research inference interface.
 

@@ -11,9 +11,9 @@ from rul.data import ROOT, load_trajectories
 from rul.experiment import load_run
 from rul.research_dashboard import render_research
 
-st.set_page_config(page_title="EngineScope | Sensor Fusion", page_icon="⚙️", layout="wide")
-st.title("EngineScope")
-st.caption("Multisensor remaining useful life • NASA C-MAPSS research")
+st.set_page_config(page_title="DegradSense | Turbofan Prognostics", page_icon="⚙️", layout="wide")
+st.title("DegradSense")
+st.caption("Multisensor Turbofan Remaining Useful Life Prediction and Early Warning • NASA C-MAPSS")
 completed_research = any(
     (p / "protocol.json").exists() and (p / "complete.json").exists()
     for p in (ROOT / "artifacts").iterdir()

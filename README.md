@@ -1,4 +1,6 @@
-# EngineScope sensor fusion for remaining useful life
+# DegradSense
+
+Multisensor Turbofan Remaining Useful Life Prediction and Early Warning
 
 This project studies whether combining sensor histories improves remaining useful life (RUL) estimates for simulated turbofan engines. It compares classical regressors with LSTM and GRU models, investigates individual sensors and sensor removal, and replays held-out engine lifetimes in an interactive dashboard.
 
@@ -39,7 +41,7 @@ GitHub Actions configuration runs lint and tests on Windows with the locked Pyth
 
 The repository includes the [experiment evidence](docs/evidence/) and a dashboard preview from the completed local study. Evidence contains saved metrics, engine predictions, cohort definitions, calibration settings, and source hashes. Downloaded NASA data, trained checkpoints, and the Python environment are excluded from Git. The evidence folder is for reviewing results; running inference requires regenerating the trained study artifacts using the commands above.
 
-![EngineScope research dashboard](docs/images/dashboard.jpg)
+![DegradSense research dashboard](docs/images/dashboard.jpg)
 
 On a fresh clone, create the Python 3.12 environment and install the locked dependencies as described below, download the dataset, and run the research study before launching the dashboard. This reproduces the full model artifacts locally; training time depends on hardware.
 
