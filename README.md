@@ -39,11 +39,15 @@ GitHub Actions configuration runs lint and tests on Windows with the locked Pyth
 
 ### Saved evidence and reproduction
 
-The repository includes the [experiment evidence](docs/evidence/) and a dashboard preview from the completed local study. Evidence contains saved metrics, engine predictions, cohort definitions, calibration settings, and source hashes. Downloaded NASA data, trained checkpoints, and the Python environment are excluded from Git. The evidence folder is for reviewing results; running inference requires regenerating the trained study artifacts using the commands above.
+The repository includes the [experiment evidence](docs/evidence/) and a dashboard preview from the completed local study. Evidence contains saved metrics, engine predictions, cohort definitions, calibration settings, and source hashes. Downloaded NASA data, full training output, and the Python environment are excluded from Git. The deployment folder includes only the two frozen final models, their preprocessors, and the saved results needed by the hosted dashboard. Reproducing training still uses the commands above.
 
 ![DegradSense research dashboard](docs/images/dashboard.jpg)
 
 On a fresh clone, create the Python 3.12 environment and install the locked dependencies as described below, download the dataset, and run the research study before launching the dashboard. This reproduces the full model artifacts locally; training time depends on hardware.
+
+### Deploy on Streamlit Community Cloud
+
+The cloud dashboard uses `deployment/app.py` and the runtime dependencies beside it. It loads bundled frozen models without retraining or downloading raw NASA data. See the [deployment instructions](deployment/README.md). Select repository `DevVisoulia25/DegradSense`, branch `main`, entrypoint `deployment/app.py`, and Python **3.12**. No secrets are required for this app. Uploaded histories are processed in memory and are not saved by the application.
 
 ## Initial local experiment
 

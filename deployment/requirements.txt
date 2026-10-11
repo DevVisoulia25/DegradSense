@@ -1,0 +1,11 @@
+# Runtime only; Python 3.12. Official CPU wheels avoid GPU dependencies.
+--extra-index-url https://download.pytorch.org/whl/cpu
+numpy==2.2.6
+pandas==2.2.3
+scipy==1.15.3
+scikit-learn==1.6.1
+joblib==1.6.0
+xgboost-cpu==2.1.4
+torch==2.7.1+cpu
+streamlit==1.65.0
+plotly==6.9.0

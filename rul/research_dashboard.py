@@ -11,11 +11,12 @@ from rul.data import COLUMNS, ROOT
 from rul.inference import predict_history
 
 
-def render_research():
+def render_research(study_root=None):
+    study_root = ROOT / "artifacts" if study_root is None else study_root
     studies = sorted(
         [
             p
-            for p in (ROOT / "artifacts").iterdir()
+            for p in study_root.iterdir()
             if p.is_dir() and (p / "protocol.json").exists() and (p / "complete.json").exists()
         ],
         reverse=True,
