@@ -1,36 +1,23 @@
-# Explaining DegradSense in an interview
+# Explaining DegradSense in college
 
-Describe the project as a controlled study of sensor fusion and temporal context for remaining useful life estimation. Lead with the question, experimental controls, and measured results. Do not claim that LSTM always beats classical models or that the dataset represents real flight telemetry.
+Start with the simpler models, then introduce the advanced comparisons.
 
-## What to demonstrate
+**What does the project do?** It estimates remaining engine operating cycles from sensor histories and evaluates whether a persistent low-RUL prediction provides useful early warning. NASA C-MAPSS is simulated turbofan data.
 
-1. Explain one sensor window and its RUL target, then locate those operations in `rul/data.py`.
-2. Explain why engines, rather than overlapping windows, are split between fitting and evaluation.
-3. Show the five-seed development table and distinguish variation across overlapping splits from independent statistical evidence.
-4. Show the frozen model selection and explain why official test results did not select the model.
-5. Show the latest-reading and single-sensor ablations. Explain what they control and which conclusions they cannot establish.
-6. Replay an assessment engine. Explain why an always-on alarm should not be rewarded as a successful early warning.
-7. Show a large prediction error and the life-stage table. Distinguish an observed failure pattern from a verified physical explanation.
-8. Upload a sensor-history file and explain the interval target, calibration assumptions, and padding behavior.
+**What is Linear Regression here?** We summarize each sensor's last 30 readings using six statistics, standardize those features using fitting engines, and fit an ordinary least-squares equation: predicted RUL = intercept + sum(coefficient × standardized feature). Predictions are clipped to the target range [0,125]. The coefficient plot uses standardized features; correlated features complicate interpretation.
 
-## Questions to prepare for
+**What is the Decision Tree?** A single tree repeatedly splits feature values to reduce squared prediction error. A leaf predicts the average training target of samples reaching that leaf. Maximum depth 14 and minimum leaf size 3 control complexity. This is one tree, not Random Forest.
 
-**Why cap RUL?** The cap encodes an early-life plateau assumption and prevents very long healthy histories from dominating the target range. It is a chosen modeling assumption, not measured degradation onset. Capped and uncapped evaluation conventions must be stated explicitly.
+**Why compare with advanced models?** XGBoost combines boosted trees; LSTM and GRU learn from ordered sensor sequences. They remain comparison models, while Linear Regression and Decision Tree provide the curriculum-friendly starting point. Do not claim that these advanced methods were taught in class if they were self-study.
 
-**Why not randomly split windows?** Adjacent windows share most readings. Random splitting can place near-duplicates and the same engine's characteristic patterns into both fitting and evaluation, making performance look better than its ability to predict another engine.
+**Why does mean still appear in feature descriptions?** A window's sensor mean is an input feature. The removed mean model was a constant baseline predicting the same average RUL for every engine. They are different uses of an average.
 
-**What is sensor fusion here?** The model receives several channels jointly. The single-sensor reference and sensor-removal experiments investigate the benefit of their joint information. They do not prove every channel is weak, establish causal fault mechanisms, or demonstrate a novel fusion architecture.
+**Why split by engine?** Randomly mixing overlapping windows from one engine into train and validation can leak near-duplicate histories. Engine-disjoint splits measure performance on other engines.
 
-**Why compare window statistics and recurrent networks?** Tree models learn from summaries of the same observation period; recurrent models learn directly from the ordered sequence. The latest-reading Random Forest controls whether historical context helps a tree model. This does not isolate the effect of temporal order within an LSTM; a sequence-order ablation would be a further experiment.
+**How are models compared fairly?** Use the same engine groups, truncated endpoints, target convention, and preprocessing. Development results select models; calibration and assessment have separate roles. Do not compare single-split scores directly with five-split averages.
 
-**What is the uncertainty interval?** It uses the finite-sample order statistic of absolute errors on separate calibration-engine endpoints. The nominal target is 90% coverage for capped RUL under exchangeable endpoints. Report observed official test coverage and width. Do not present it as a 90% probability that a particular engine will fail in that interval or as guaranteed coverage across its whole lifetime.
+**Is this a new untouched test?** No. Both official test outcomes were previously inspected. The current curriculum revision is retrospective and preserves that limitation.
 
-**Why do models change ranking?** Different fitting and validation engines can have different degradation patterns, and model capacity and random optimization matter. The study measures ranking stability. It does not establish a physical explanation for every ranking change.
+**What should I demonstrate?** In Single-split experiment select Linear Regression (`linear`) and Decision Tree (`dt`), show their metrics and replay, and explain coefficients/tree attribution. Then show the five-seed Research evidence comparison and uncertainty/failure analysis.
 
-**What makes FD003 useful?** It provides a second fault configuration with a single operating condition. We fit it separately under the same study design. That is replication; it is not a claim that a model trained on FD001 transfers to FD003.
-
-**What remains limited?** Simulated data, small development/calibration/assessment cohorts, fixed hyperparameters, overlapping development splits, and retrospective exposure to FD001. The official test set has now been evaluated for this release. Future changes must treat it as a used benchmark and should reserve fresh data for new claims.
-
-## Before putting the project on your resume
-
-Reproduce one experiment yourself, trace an input through preprocessing and prediction, and explain why each evaluation group exists. Cite exact saved metrics and label them as validation or official test results. Describe AI assistance honestly if asked; your demonstrated understanding and ownership matter more than the amount of generated code.
+**What should I avoid claiming?** Novel architecture, causal sensor explanations, real-engine validation, guaranteed failure time, or that the simpler models outperform every advanced model. Explain assistance honestly and demonstrate that you understand the code.

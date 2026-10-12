@@ -1,0 +1,3 @@
+model,horizon_cycles,persistence_cycles,n_engines,missed_engines,missed_engine_rate,false_positive_cycle_rate,mean_confirmed_lead_cycles,median_confirmed_lead_cycles
+xgb,30,3,20,0,0.0,0.01509027216383724,22.9,24.0
+sensor_2_3sigma,30,3,20,9,0.45,0.02021018593371059,15.363636363636363,15.0

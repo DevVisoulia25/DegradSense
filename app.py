@@ -10,6 +10,8 @@ import streamlit as st
 from rul.data import ROOT, load_trajectories
 from rul.experiment import load_run
 from rul.research_dashboard import render_research
+from rul.study import MODELS
+from rul.models import MODEL_LABELS
 
 st.set_page_config(page_title="DegradSense | Turbofan Prognostics", page_icon="⚙️", layout="wide")
 st.title("DegradSense")
@@ -20,7 +22,7 @@ completed_research = any(
     if p.is_dir()
 )
 view = st.sidebar.radio(
-    "View", ["Research evidence", "Original experiment"], index=0 if completed_research else 1
+    "View", ["Research evidence", "Single-split experiment"], index=0 if completed_research else 1
 )
 if view == "Research evidence":
     render_research()
@@ -31,6 +33,7 @@ runs = sorted(
         p
         for p in (ROOT / "artifacts").glob("*")
         if p.is_dir() and (p / "complete.json").exists() and (p / "config.json").exists()
+        and "linear" in json.loads((p / "config.json").read_text()).get("models", [])
     ],
     reverse=True,
 )
@@ -42,10 +45,12 @@ if not runs:
 selected = st.sidebar.selectbox("Experiment", runs, format_func=lambda p: p.name)
 run, config, prep = load_run(selected)
 metrics = pd.read_csv(run / "metrics.csv")
+metrics = metrics[metrics.model.isin(MODELS + ["svr"])]
 available = metrics[metrics.split == "validation_endpoint"].model.tolist()
 model = st.sidebar.selectbox(
     "Model",
     available,
+    format_func=lambda name: MODEL_LABELS.get(name, name),
     index=available.index(metrics[metrics.split == "validation_endpoint"].sort_values("rmse").iloc[0].model),
 )
 st.sidebar.caption(
@@ -75,11 +80,11 @@ with overview:
     col3.metric("Engines evaluated", int(chosen.n_predictions))
     st.plotly_chart(
         px.bar(
-            endpoints, x="model", y="rmse", color="model", labels={"rmse": "RMSE (cycles)", "model": "Model"}
+            endpoints.assign(model=endpoints.model.map(MODEL_LABELS)), x="model", y="rmse", color="model", labels={"rmse": "RMSE (cycles)", "model": "Model"}
         ),
         width="stretch",
     )
-    st.dataframe(endpoints.drop(columns="split"), hide_index=True, width="stretch")
+    st.dataframe(endpoints.drop(columns="split").assign(model=endpoints.model.map(MODEL_LABELS)), hide_index=True, width="stretch")
     predictions = pd.read_csv(run / f"{model}_validation_endpoint_predictions.csv")
     fig = px.scatter(
         predictions,
@@ -180,7 +185,7 @@ with fusion:
             st.write("Warning performance for the same sensor variants")
             st.dataframe(pd.read_csv(warning_path), hide_index=True, width="stretch")
         st.caption(
-            "Every variant is retrained with the same Random Forest settings, engine split, "
+            "Every variant is retrained with the same Decision Tree settings, engine split, "
             "and validation observation points. Results describe model dependence, not causal interactions."
         )
     else:
@@ -193,7 +198,14 @@ with explain:
     st.subheader("Which inputs influence the model?")
     shap_path = run / f"{model}_shap_sensors.csv"
     importance_path = run / f"{model}_feature_importance.csv"
-    if shap_path.exists():
+    coefficient_path = run / "linear_coefficients.csv"
+    if model == "linear" and coefficient_path.exists():
+        coefficients = pd.read_csv(coefficient_path)
+        coefficients["magnitude"] = coefficients.coefficient.abs()
+        coefficients = coefficients.nlargest(20, "magnitude").sort_values("magnitude")
+        st.plotly_chart(px.bar(coefficients, x="coefficient", y="feature", orientation="h"), width="stretch")
+        st.caption("Linear coefficients for standardized window statistics. Correlated inputs affect coefficients; this is not causal evidence.")
+    elif shap_path.exists():
         values = pd.read_csv(shap_path)
         st.plotly_chart(
             px.bar(
@@ -218,7 +230,7 @@ with explain:
         st.caption("Built-in tree importance. Run SHAP for a separate attribution view.")
     else:
         st.info(
-            "Tree explanations are available for Random Forest and XGBoost. "
+            "Tree explanations are available for Decision Tree and XGBoost. "
             "Use the fusion study to investigate sensor dependence."
         )
 

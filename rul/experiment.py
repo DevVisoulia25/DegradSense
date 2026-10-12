@@ -128,6 +128,10 @@ def train(args):
             model = classical_model(name, args.seed, args.trees)
             model.fit(window_features(training.x), training.y)
             joblib.dump(model, output / f"{name}.joblib")
+            if name == "linear":
+                pd.DataFrame(
+                    {"feature": feature_names(prep.sensors), "coefficient": model[-1].coef_}
+                ).to_csv(output / "linear_coefficients.csv", index=False)
             if hasattr(model, "feature_importances_"):
                 pd.DataFrame(
                     {"feature": feature_names(prep.sensors), "importance": model.feature_importances_}
@@ -212,10 +216,10 @@ def evaluate_test(args):
 
 
 def fusion_study(args):
-    """RF single-sensor and leave-one-sensor-out study on fixed validation only."""
+    """Decision Tree single-sensor and leave-one-sensor-out study on fixed validation only."""
     path, config, prep = load_run(args.run)
     destination = path / "fusion"
-    if destination.exists():
+    if destination.exists() and any(destination.iterdir()):
         raise ValueError("Fusion study already exists; keep it as a reproducible result")
     raw_path = ROOT / "data" / "raw" / "train_FD001.txt"
     if hashlib.sha256(raw_path.read_bytes()).hexdigest() != config["train_data_sha256"]:
@@ -229,7 +233,7 @@ def fusion_study(args):
     endpoint_frame = validation_endpoints(validation_frame, config["window"], config["seed"])
     val_windows = make_windows(prep.transform(endpoint_frame), prep.sensors, config["window"], last_only=True)
     replay_windows = make_windows(prep.transform(validation_frame), prep.sensors, config["window"])
-    destination.mkdir()
+    destination.mkdir(exist_ok=True)
     experiments = [("all_sensors", list(range(len(prep.sensors))))]
     experiments += [(f"only_{s}", [i]) for i, s in enumerate(prep.sensors)]
     experiments += [
@@ -237,10 +241,10 @@ def fusion_study(args):
     ]
     rows, warnings = [], []
     for name, indices in experiments:
-        model = classical_model("rf", config["seed"], args.trees)
+        model = classical_model("dt", config["seed"])
         model.fit(window_features(train_windows.x[:, :, indices]), train_windows.y)
         pred = np.clip(model.predict(window_features(val_windows.x[:, :, indices])), 0, config["cap"])
-        row = {"experiment": name, "sensor_count": len(indices), **regression_metrics(val_windows.y, pred)}
+        row = {"experiment": name, "model": "dt", "sensor_count": len(indices), **regression_metrics(val_windows.y, pred)}
         rows.append(row)
         replay_predictions = np.clip(
             model.predict(window_features(replay_windows.x[:, :, indices])), 0, config["cap"]
@@ -258,8 +262,9 @@ def fusion_study(args):
     write_json(
         destination / "protocol.json",
         {
-            "model": "rf",
-            "trees": args.trees,
+            "model": "dt",
+            "max_depth": 14,
+            "min_samples_leaf": 3,
             "seed": config["seed"],
             "split": "validation_endpoint",
             "test_used": False,
@@ -273,8 +278,8 @@ def explain(args):
     import shap
 
     path, config, prep = load_run(args.run)
-    if args.model not in ("rf", "xgb") or args.model not in config["models"]:
-        raise ValueError("Choose an RF or XGBoost model that was trained in this run")
+    if args.model not in ("dt", "xgb") or args.model not in config["models"]:
+        raise ValueError("Choose a Decision Tree or XGBoost model that was trained in this run")
     frame = label_training(load_trajectories(ROOT / "data" / "raw" / "train_FD001.txt"), config["cap"])
     frame = frame[frame.engine.isin(config["validation_engines"])]
     windows = make_windows(prep.transform(frame), prep.sensors, config["window"])

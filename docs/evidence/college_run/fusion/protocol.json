@@ -1,0 +1,10 @@
+{
+  "model": "dt",
+  "max_depth": 14,
+  "min_samples_leaf": 3,
+  "seed": 42,
+  "split": "validation_endpoint",
+  "test_used": false,
+  "warning_horizon": 30,
+  "warning_persistence": 3
+}

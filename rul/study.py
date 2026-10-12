@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import shutil
 import time
 from pathlib import Path
 
@@ -26,7 +27,7 @@ from rul.metrics import regression_metrics, warning_metrics
 from rul.models import classical_model, fit_sequence, sequence_predict
 from rul.statistics import bootstrap_rmse, conformal_radius, interval_bounds
 
-MODELS = ["mean", "rf", "xgb", "lstm", "gru", "rf_latest", "rf_single"]
+MODELS = ["linear", "dt", "xgb", "lstm", "gru", "dt_latest", "dt_single"]
 
 
 def cohorts(ids, seed=2026):
@@ -41,9 +42,9 @@ def cohorts(ids, seed=2026):
 
 
 def inputs(x, name, sensor_index):
-    if name == "rf_latest":
+    if name == "dt_latest":
         return x[:, -1]
-    if name == "rf_single":
+    if name == "dt_single":
         return window_features(x[:, :, [sensor_index]])
     return window_features(x)
 
@@ -59,7 +60,7 @@ def fit_candidate(name, training, validation, settings, seed, single_index):
     if name in ("lstm", "gru"):
         model, history = fit_sequence(name, training, validation, settings["cap"], settings["epochs"], seed)
     else:
-        model = classical_model("rf" if name.startswith("rf_") else name, seed, settings["trees"])
+        model = classical_model("dt" if name.startswith("dt_") else name, seed, settings["trees"])
         model.fit(inputs(training.x, name, single_index), training.y)
     return model, history, time.perf_counter() - started
 
@@ -70,7 +71,7 @@ def predict_candidate(name, model, windows, settings, single_index):
     return np.clip(model.predict(inputs(windows.x, name, single_index)), 0, settings["cap"])
 
 
-def development_run(data, subset, seed, output, settings):
+def development_run(data, subset, seed, output, settings, reuse=None):
     if (output / "complete.json").exists():
         return pd.read_csv(output / "metrics.csv").to_dict("records")
     output.mkdir(parents=True, exist_ok=True)
@@ -94,7 +95,28 @@ def development_run(data, subset, seed, output, settings):
         },
     )
     rows = []
+    partial = pd.read_csv(output / "metrics.csv") if (output / "metrics.csv").exists() else pd.DataFrame()
+    source = reuse / "development" / subset / f"seed_{seed}" if reuse else None
+    cached = pd.read_csv(source / "metrics.csv") if source and (source / "complete.json").exists() else pd.DataFrame()
+    if source and not cached.empty:
+        expected_split = json.loads((output / "split.json").read_text())
+        if json.loads((source / "split.json").read_text()) != expected_split:
+            raise ValueError("Cannot reuse development fits from different engines or preprocessing")
     for name in MODELS:
+        if not partial.empty and name in partial.model.values:
+            rows.append(partial[partial.model == name].iloc[0].to_dict())
+            continue
+        if not cached.empty and name in cached.model.values:
+            row = cached[cached.model == name].iloc[0].to_dict()
+            row["reused_from"] = str(source)
+            for suffix in ("predictions.csv", "history.csv"):
+                original = source / f"{name}_{suffix}"
+                if original.exists():
+                    shutil.copy2(original, output / original.name)
+            rows.append(row)
+            pd.DataFrame(rows).to_csv(output / "metrics.csv", index=False)
+            print(f"{subset} seed {seed} {name}: reused identical development fit", flush=True)
+            continue
         model, history, elapsed = fit_candidate(name, training, endpoint, settings, seed, single)
         pred = predict_candidate(name, model, endpoint, settings, single)
         row = {
@@ -293,11 +315,11 @@ def study(args):
             for s in args.subsets
         },
         "fd001_prior_exposure": "Previously used in v1 exploration; assessment is retrospective, not globally pristine.",
-        "fd003_prior_exposure": "No FD003 models or outcome exploration before this protocol.",
+        "fd003_prior_exposure": "FD003 outcomes were already inspected in version two; this revision is retrospective.",
         "endpoint_sampling_seed": 31415,
         "cohort_seed": 2026,
         "warning_rule": "predicted RUL <=30 for 3 consecutive cycles; no threshold tuning on assessment",
-        "version": 2,
+        "version": 3,
     }
     output.mkdir(parents=True, exist_ok=True)
     protocol_path = output / "protocol.json"
@@ -306,6 +328,12 @@ def study(args):
             raise ValueError("Cannot change an existing study protocol; use a new folder")
     else:
         write_json(protocol_path, protocol)
+    reuse = Path(args.reuse_development) if getattr(args, "reuse_development", None) else None
+    if reuse:
+        previous = json.loads((reuse / "protocol.json").read_text())
+        for key in ("settings", "cohorts", "data_hashes", "endpoint_sampling_seed"):
+            if previous[key] != protocol[key]:
+                raise ValueError(f"Cannot reuse development fits with different {key}")
     if (output / "complete.json").exists():
         print("Study already completed; saved results preserved.")
         return
@@ -315,7 +343,7 @@ def study(args):
         for seed in args.seeds:
             all_rows.extend(
                 development_run(
-                    development, subset, seed, output / "development" / subset / f"seed_{seed}", settings
+                    development, subset, seed, output / "development" / subset / f"seed_{seed}", settings, reuse
                 )
             )
             pd.DataFrame(all_rows).to_csv(output / "development_metrics.csv", index=False)

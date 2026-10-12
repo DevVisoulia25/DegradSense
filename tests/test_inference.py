@@ -15,17 +15,17 @@ def test_unlabeled_inference_ignores_supplied_targets_and_retains_only_outputs(t
     training = label_training(raw)
     prep = Preprocessor.fit(training)
     windows = make_windows(prep.transform(training), prep.sensors, 30)
-    model = classical_model("rf", trees=2)
+    model = classical_model("dt", trees=2)
     model.fit(window_features(windows.x), windows.y)
     path = tmp_path / "FD001"
     path.mkdir()
     (path / "complete.json").write_text('{"complete": true}')
     (path / "frozen_protocol.json").write_text(
-        json.dumps({"model": "rf", "settings": {"cap": 125, "window": 30}, "single_sensor": prep.sensors[0]})
+        json.dumps({"model": "dt", "settings": {"cap": 125, "window": 30}, "single_sensor": prep.sensors[0]})
     )
     (path / "calibration.json").write_text('{"radius_cycles": 10}')
     joblib.dump(prep, path / "preprocessor.joblib")
-    joblib.dump(model, path / "rf.joblib")
+    joblib.dump(model, path / "dt.joblib")
     original = predict_history(raw, tmp_path, "FD001")
     altered = raw.copy()
     altered["rul"] = -999999

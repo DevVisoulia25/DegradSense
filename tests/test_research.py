@@ -51,8 +51,8 @@ def test_sensor_selection_uses_only_supplied_training_frame():
     train = pd.DataFrame({"sensor_1": [0, 1, 2, 3], "sensor_2": [2, 0, 3, 1], "rul_raw": [0, 1, 2, 3]})
     assert select_single(train, ["sensor_1", "sensor_2"]) == 0
     x = np.ones((2, 30, 3), dtype=np.float32)
-    assert inputs(x, "rf_latest", 0).shape == (2, 3)
-    assert inputs(x, "rf_single", 0).shape == (2, 6)
+    assert inputs(x, "dt_latest", 0).shape == (2, 3)
+    assert inputs(x, "dt_single", 0).shape == (2, 6)
 
 
 def test_endpoint_cutoffs_are_stable_for_each_engine_across_seed_splits():

@@ -5,14 +5,20 @@ import random
 
 import numpy as np
 import torch
-from sklearn.dummy import DummyRegressor
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 from xgboost import XGBRegressor
+
+MODEL_LABELS = {
+    "linear": "Linear Regression", "dt": "Decision Tree", "xgb": "XGBoost",
+    "lstm": "LSTM", "gru": "GRU", "svr": "Support Vector Regression",
+    "dt_latest": "Decision Tree: latest readings", "dt_single": "Decision Tree: single sensor",
+}
 
 
 def seed_everything(seed):
@@ -26,12 +32,10 @@ def seed_everything(seed):
 
 
 def classical_model(name, seed=42, trees=120):
-    if name == "mean":
-        return DummyRegressor(strategy="mean")
-    if name == "rf":
-        return RandomForestRegressor(
-            n_estimators=trees, max_depth=14, min_samples_leaf=3, n_jobs=4, random_state=seed
-        )
+    if name == "linear":
+        return make_pipeline(StandardScaler(), LinearRegression())
+    if name == "dt":
+        return DecisionTreeRegressor(max_depth=14, min_samples_leaf=3, random_state=seed)
     if name == "xgb":
         return XGBRegressor(
             n_estimators=trees * 2,

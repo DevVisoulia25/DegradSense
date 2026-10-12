@@ -14,7 +14,7 @@ Community Cloud uses `deployment/requirements.txt` beside this entrypoint. It pi
 
 ## Included files
 
-`studies/research_v2` contains the frozen FD001 LSTM and FD003 XGBoost, their fitted preprocessors, saved calibration and protocol settings, and research evidence. These are the original fitted models, not retrained deployment replacements. `model_manifest.json` records model-file SHA256 hashes for comparing the bundle with local study output.
+`studies/research_v3_college` contains the frozen FD001 LSTM and FD003 XGBoost, their fitted preprocessors, saved calibration and protocol settings, and research evidence. These are the original fitted models, not retrained deployment replacements. `model_manifest.json` records model-file SHA256 hashes for comparing the bundle with local study output.
 
 Only repository-controlled model files are loaded. Uploaded inputs are sensor histories, not serialized models. Uploaded histories and predictions are processed in memory; the application does not write them to disk. Hosting-provider processing policies still apply.
 
@@ -28,4 +28,4 @@ Using the existing development environment, run from the repository root:
 .\.venv\Scripts\python.exe -m streamlit run deployment/app.py --server.address 127.0.0.1
 ```
 
-This checks the packaged app independently of `artifacts/first_run`, `artifacts/research_v2`, and raw training data. A successful local check does not establish that the hosted Linux environment has passed its own startup and inference checks.
+This checks the packaged app independently of `artifacts/first_run`, `artifacts/research_v3_college`, and raw training data. A successful local check does not establish that the hosted Linux environment has passed its own startup and inference checks.

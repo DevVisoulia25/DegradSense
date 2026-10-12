@@ -9,6 +9,8 @@ import streamlit as st
 
 from rul.data import COLUMNS, ROOT
 from rul.inference import predict_history
+from rul.study import MODELS
+from rul.models import MODEL_LABELS
 
 
 def render_research(study_root=None):
@@ -18,6 +20,7 @@ def render_research(study_root=None):
             p
             for p in study_root.iterdir()
             if p.is_dir() and (p / "protocol.json").exists() and (p / "complete.json").exists()
+            and json.loads((p / "protocol.json").read_text()).get("model_candidates") == MODELS
         ],
         reverse=True,
     )
@@ -35,6 +38,7 @@ def render_research(study_root=None):
     summary = summary[summary.subset == subset].sort_values("rmse_mean")
     final = pd.read_csv(path / "final_metrics.csv")
     official = final[final.split == "official_test"].iloc[0]
+    st.sidebar.caption("Linear Regression and Decision Tree replace the earlier baselines")
     st.sidebar.caption(f"Frozen final model: {frozen['model']}")
     st.sidebar.caption("60 development · 20 calibration · 20 assessment engines")
     st.subheader("Evidence from repeated and final evaluations")
@@ -57,13 +61,14 @@ def render_research(study_root=None):
         ]
     )
     with evidence:
+        st.caption("linear = Linear Regression · dt = Decision Tree · xgb = XGBoost · lstm/gru = recurrent networks")
         st.write(
             "Five development splits compare model families and controlled ablations. "
             "Bars show mean validation endpoint RMSE; error bars show variability across seeds."
         )
         st.plotly_chart(
             px.bar(
-                summary,
+                summary.assign(model=summary.model.map(MODEL_LABELS)),
                 x="model",
                 y="rmse_mean",
                 error_y="rmse_std",
@@ -71,9 +76,9 @@ def render_research(study_root=None):
             ),
             width="stretch",
         )
-        st.dataframe(summary.drop(columns="subset"), hide_index=True, width="stretch")
+        st.dataframe(summary.drop(columns="subset").assign(model=summary.model.map(MODEL_LABELS)), hide_index=True, width="stretch")
         st.caption(
-            "rf_latest uses current readings without window statistics. rf_single uses one sensor "
+            "dt_latest uses current readings without window statistics. dt_single uses one sensor "
             "chosen by training-only correlation. Seed splits overlap; their standard deviation is "
             "a stability summary, not a confidence interval or significance test."
         )
@@ -94,7 +99,7 @@ def render_research(study_root=None):
         if subset == "FD001":
             st.caption(
                 "FD001 assessment is retrospective because version one used this dataset. "
-                "FD003 was first modeled under the frozen research protocol."
+                "FD003 also had prior version-two exposure; the current revision is retrospective."
             )
         replay = pd.read_csv(path / "assessment_replay_predictions.csv")
         engine = st.selectbox("Assessment engine", sorted(replay.engine.unique()))
@@ -187,6 +192,7 @@ def render_research(study_root=None):
             "They do not express failure probabilities. Coverage may change for external equipment or operating conditions."
         )
     with methods:
+        st.caption("Both datasets and their test results were inspected in earlier versions. This curriculum revision is retrospective; it does not introduce an untouched test benchmark.")
         st.write(
             "Model family is selected by mean development RMSE across five seeds. The selected model "
             "is refitted on all 60 development engines. Twenty separate engine endpoints calibrate "

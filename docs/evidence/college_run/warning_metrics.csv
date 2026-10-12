@@ -1,0 +1,7 @@
+model,horizon_cycles,persistence_cycles,n_engines,missed_engines,missed_engine_rate,false_positive_cycle_rate,mean_confirmed_lead_cycles,median_confirmed_lead_cycles
+linear,30,3,20,0,0.0,0.0031358885017421603,19.65,21.0
+dt,30,3,20,0,0.0,0.03205574912891986,25.0,27.5
+xgb,30,3,20,0,0.0,0.011498257839721254,25.5,27.5
+lstm,30,3,20,0,0.0,0.024041811846689895,24.95,27.0
+gru,30,3,20,0,0.0,0.012195121951219513,23.85,24.0
+threshold_sensor_2_3sigma,30,3,20,4,0.2,0.014982578397212544,8.75,7.0

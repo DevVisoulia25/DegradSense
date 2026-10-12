@@ -10,7 +10,7 @@ from rul.data import COLUMNS
 from rul.inference import predict_history
 
 ROOT = Path(__file__).resolve().parents[1]
-STUDY = ROOT / "deployment" / "studies" / "research_v2"
+STUDY = ROOT / "deployment" / "studies" / "research_v3_college"
 
 
 def test_packaged_models_match_manifest_and_predict_without_raw_data():

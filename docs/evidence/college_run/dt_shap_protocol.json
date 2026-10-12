@@ -1,0 +1,7 @@
+{
+  "n_samples": 100,
+  "seed": 42,
+  "split": "validation",
+  "method": "tree_path_dependent",
+  "interpretation": "Model attribution under correlated features; not causal evidence."
+}
